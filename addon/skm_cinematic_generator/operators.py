@@ -1,0 +1,59 @@
+import bpy
+from bpy.types import Operator
+
+from . import generator
+
+
+class SKM_OT_generate_scene(Operator):
+    bl_idname = "skm.generate_scene"
+    bl_label = "Generate Complete Scene"
+    bl_description = "Generate a complete cinematic sanctum scene"
+
+    def execute(self, context):
+        generator.generate_complete_scene(context)
+        self.report({'INFO'}, "SKM scene generated")
+        return {'FINISHED'}
+
+
+class SKM_OT_create_sanctum(Operator):
+    bl_idname = "skm.create_sanctum"
+    bl_label = "Create Sanctum"
+    bl_description = "Create the sanctum architecture blockout"
+
+    def execute(self, context):
+        generator.create_architecture(context)
+        self.report({'INFO'}, "Sanctum created")
+        return {'FINISHED'}
+
+
+class SKM_OT_setup_materials(Operator):
+    bl_idname = "skm.setup_materials"
+    bl_label = "Create Materials"
+    bl_description = "Create procedural materials"
+
+    def execute(self, context):
+        generator.create_materials(context)
+        self.report({'INFO'}, "Materials created")
+        return {'FINISHED'}
+
+
+class SKM_OT_setup_lighting(Operator):
+    bl_idname = "skm.setup_lighting"
+    bl_label = "Setup Lighting"
+    bl_description = "Create camera lighting setup"
+
+    def execute(self, context):
+        generator.setup_lighting(context)
+        self.report({'INFO'}, "Lighting created")
+        return {'FINISHED'}
+
+
+class SKM_OT_setup_camera(Operator):
+    bl_idname = "skm.setup_camera"
+    bl_label = "Setup Camera"
+    bl_description = "Create and position cinematic camera"
+
+    def execute(self, context):
+        generator.setup_camera(context)
+        self.report({'INFO'}, "Camera created")
+        return {'FINISHED'}
