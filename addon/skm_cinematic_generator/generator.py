@@ -1,6 +1,7 @@
 import bpy
 from math import radians
-from mathutils import Vector
+
+from .materials import create_material_library
 
 
 ADDON_PREFIX = "SKM_"
@@ -43,21 +44,9 @@ def _link_object(obj, collection):
             c.objects.unlink(obj)
 
 
-def _new_material(name, base_color=(0.2, 0.2, 0.2, 1.0), roughness=0.7, metallic=0.0):
-    mat = bpy.data.materials.get(name)
-    if mat is None:
-        mat = bpy.data.materials.new(name)
-        mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    bsdf = nodes.get("Principled BSDF")
-    if bsdf:
-        bsdf.inputs[0].default_value = base_color
-        bsdf.inputs[7].default_value = roughness
-        bsdf.inputs[6].default_value = metallic
-    return mat
-
-
 def _apply_material(obj, mat):
+    if obj.type != 'MESH':
+        return
     if obj.data.materials:
         obj.data.materials[0] = mat
     else:
@@ -73,7 +62,7 @@ def create_architecture(context):
     cameras = _ensure_collection("Cameras", root)
     lighting = _ensure_collection("Lighting", root)
     fx = _ensure_collection("FX", root)
-    reference = _ensure_collection("Reference", root)
+    _ensure_collection("Reference", root)
 
     scene = context.scene
     scene.render.engine = 'CYCLES'
@@ -82,26 +71,25 @@ def create_architecture(context):
         scene.cycles.preview_samples = 32
     if hasattr(scene.cycles, "samples"):
         scene.cycles.samples = 128
-    if hasattr(scene, "display_settings"):
-        try:
-            scene.view_settings.look = 'Filmic'
-        except Exception:
-            pass
+    try:
+        scene.view_settings.look = 'Filmic'
+    except Exception:
+        pass
+    scene.unit_settings.system = 'METRIC'
+    scene.unit_settings.scale_length = 1.0
 
     # Floor
     bpy.ops.mesh.primitive_plane_add(size=settings.sanctum_size, location=(0, 0, 0))
     floor = context.active_object
     floor.name = "Ground_Main"
-    floor.scale = (1, 1, 1)
     _link_object(floor, architecture)
-    solid = floor.modifiers.new(name="Solidify", type='SOLIDIFY')
-    solid.thickness = 0.4
+    floor.modifiers.new(name="Solidify", type='SOLIDIFY').thickness = 0.4
     bev = floor.modifiers.new(name="Bevel", type='BEVEL')
     bev.width = 0.04
     bev.segments = 3
 
     # Steps
-    step_w = 12.0
+    step_w = settings.hero_wall_width / 2.0
     step_d = 3.0
     step_h = 0.45
     step_y = 8.0
@@ -116,41 +104,39 @@ def create_architecture(context):
     bpy.ops.mesh.primitive_cube_add(location=(0, 13.0, 1.0))
     platform = context.active_object
     platform.name = "Platform_Main"
-    platform.scale = (7.0, 4.0, 0.7)
+    platform.scale = (7.0, 3.8, 0.7)
     _link_object(platform, architecture)
 
-    # Hero wall frame
+    # Hero wall
     bpy.ops.mesh.primitive_cube_add(location=(0, 22.0, 7.5))
     wall = context.active_object
     wall.name = "Hero_Wall"
-    wall.scale = (11.5, 0.6, 8.0)
+    wall.scale = (settings.hero_wall_width / 2, 0.6, settings.hero_wall_height / 2)
     _link_object(wall, architecture)
 
-    # Inner recessed frame
     bpy.ops.mesh.primitive_cube_add(location=(0, 21.45, 7.5))
     frame = context.active_object
     frame.name = "Hero_Wall_Frame"
-    frame.scale = (8.5, 0.15, 5.8)
+    frame.scale = (settings.hero_wall_width * 0.37, 0.15, settings.hero_wall_height * 0.36)
     _link_object(frame, architecture)
 
-    # Pillars front
+    # Four pillars
     pillar_positions = [(-7.5, 9.0), (7.5, 9.0), (-7.5, 17.0), (7.5, 17.0)]
     for idx, (x, y) in enumerate(pillar_positions, start=1):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=settings.pillar_radius, depth=settings.pillar_height, location=(x, y, settings.pillar_height / 2))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=settings.pillar_radius, depth=settings.pillar_height, location=(x, y, settings.pillar_height / 2))
         pillar = context.active_object
         pillar.name = f"Pillar_{idx:02d}"
+        _link_object(pillar, architecture)
         bev = pillar.modifiers.new(name="Bevel", type='BEVEL')
         bev.width = 0.06
         bev.segments = 3
-        _link_object(pillar, architecture)
 
-        # simple base and cap
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=settings.pillar_radius * 1.2, depth=0.35, location=(x, y, 0.175))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=settings.pillar_radius * 1.25, depth=0.35, location=(x, y, 0.175))
         base = context.active_object
         base.name = f"Pillar_{idx:02d}_Base"
         _link_object(base, architecture)
 
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=settings.pillar_radius * 1.12, depth=0.35, location=(x, y, settings.pillar_height + 0.175))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=settings.pillar_radius * 1.12, depth=0.35, location=(x, y, settings.pillar_height + 0.175))
         cap = context.active_object
         cap.name = f"Pillar_{idx:02d}_Cap"
         _link_object(cap, architecture)
@@ -191,35 +177,22 @@ def create_architecture(context):
     _link_object(fog, fx)
     fog.display_type = 'WIRE'
 
-    # Materials
-    granite = _new_material("SKM_Granite", (0.06, 0.06, 0.07, 1.0), roughness=0.9, metallic=0.0)
-    bronze = _new_material("SKM_Bronze", (0.34, 0.22, 0.12, 1.0), roughness=0.45, metallic=1.0)
-    for obj in [floor, step for step in []]:
-        pass
-
+    # Assign procedural materials
+    mats = create_material_library()
+    granite = mats["SKM_Granite"]
     for obj in [floor, platform, wall, frame] + [o for o in architecture.objects if o.name.startswith("Step_") or o.name.startswith("Pillar_")]:
-        if obj.type == 'MESH':
-            _apply_material(obj, granite)
-
-    # Set active scene frame / unit scale defaults
-    scene.unit_settings.system = 'METRIC'
-    scene.unit_settings.scale_length = 1.0
+        _apply_material(obj, granite)
 
     return {
         "architecture": architecture.name,
         "cameras": cameras.name,
         "lighting": lighting.name,
         "fx": fx.name,
-        "reference": reference.name,
     }
 
 
 def create_materials(context):
-    granite = _new_material("SKM_Granite", (0.06, 0.06, 0.07, 1.0), roughness=0.9, metallic=0.0)
-    bronze = _new_material("SKM_Bronze", (0.34, 0.22, 0.12, 1.0), roughness=0.45, metallic=1.0)
-    gold = _new_material("SKM_Gold", (0.9, 0.78, 0.35, 1.0), roughness=0.3, metallic=1.0)
-    sandstone = _new_material("SKM_Sandstone", (0.35, 0.28, 0.20, 1.0), roughness=0.85, metallic=0.0)
-    return [granite.name, bronze.name, gold.name, sandstone.name]
+    return list(create_material_library().keys())
 
 
 def setup_lighting(context):
@@ -230,6 +203,14 @@ def setup_lighting(context):
         scene.cycles.samples = 128
     if hasattr(scene.cycles, "preview_samples"):
         scene.cycles.preview_samples = 32
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("SKM_World")
+    world = scene.world
+    world.use_nodes = True
+    bg = world.node_tree.nodes.get("Background")
+    if bg:
+        bg.inputs[0].default_value = (0.015, 0.015, 0.02, 1.0)
+        bg.inputs[1].default_value = 0.08
     return True
 
 
