@@ -1,5 +1,3 @@
-import bpy
-
 from .utils import new_principled_material
 
 
@@ -24,6 +22,11 @@ MATERIAL_SPECS = {
         "roughness": 0.28,
         "metallic": 1.0,
     },
+    "SKM_Ember": {
+        "base_color": (0.70, 0.25, 0.06, 1.0),
+        "roughness": 0.55,
+        "metallic": 0.0,
+    },
 }
 
 
@@ -37,3 +40,8 @@ def create_material_library():
             metallic=spec["metallic"],
         )
     return mats
+
+
+def get_material(name):
+    mats = create_material_library()
+    return mats.get(name)
