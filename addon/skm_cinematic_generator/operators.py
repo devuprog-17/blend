@@ -1,3 +1,4 @@
+import bpy
 from bpy.types import Operator
 
 from . import generator
@@ -12,7 +13,7 @@ class SKM_OT_generate_scene(Operator):
         try:
             generator.generate_complete_scene(context)
         except Exception as exc:
-            self.report({'ERROR'}, f"Generation failed: {exc}")
+            self.report({'ERROR'}, f"SKM scene generation failed: {exc}")
             return {'CANCELLED'}
         self.report({'INFO'}, "SKM scene generated")
         return {'FINISHED'}
@@ -42,7 +43,7 @@ class SKM_OT_setup_materials(Operator):
         try:
             generator.create_materials(context)
         except Exception as exc:
-            self.report({'ERROR'}, f"Material setup failed: {exc}")
+            self.report({'ERROR'}, f"Material creation failed: {exc}")
             return {'CANCELLED'}
         self.report({'INFO'}, "Materials created")
         return {'FINISHED'}
