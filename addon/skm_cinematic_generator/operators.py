@@ -1,4 +1,3 @@
-import bpy
 from bpy.types import Operator
 
 from . import generator
@@ -10,7 +9,11 @@ class SKM_OT_generate_scene(Operator):
     bl_description = "Generate a complete cinematic sanctum scene"
 
     def execute(self, context):
-        generator.generate_complete_scene(context)
+        try:
+            generator.generate_complete_scene(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Generation failed: {exc}")
+            return {'CANCELLED'}
         self.report({'INFO'}, "SKM scene generated")
         return {'FINISHED'}
 
@@ -21,7 +24,11 @@ class SKM_OT_create_sanctum(Operator):
     bl_description = "Create the sanctum architecture blockout"
 
     def execute(self, context):
-        generator.create_architecture(context)
+        try:
+            generator.create_architecture(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Sanctum creation failed: {exc}")
+            return {'CANCELLED'}
         self.report({'INFO'}, "Sanctum created")
         return {'FINISHED'}
 
@@ -32,7 +39,11 @@ class SKM_OT_setup_materials(Operator):
     bl_description = "Create procedural materials"
 
     def execute(self, context):
-        generator.create_materials(context)
+        try:
+            generator.create_materials(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Material setup failed: {exc}")
+            return {'CANCELLED'}
         self.report({'INFO'}, "Materials created")
         return {'FINISHED'}
 
@@ -43,7 +54,11 @@ class SKM_OT_setup_lighting(Operator):
     bl_description = "Create camera lighting setup"
 
     def execute(self, context):
-        generator.setup_lighting(context)
+        try:
+            generator.setup_lighting(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Lighting setup failed: {exc}")
+            return {'CANCELLED'}
         self.report({'INFO'}, "Lighting created")
         return {'FINISHED'}
 
@@ -54,6 +69,10 @@ class SKM_OT_setup_camera(Operator):
     bl_description = "Create and position cinematic camera"
 
     def execute(self, context):
-        generator.setup_camera(context)
+        try:
+            generator.setup_camera(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Camera setup failed: {exc}")
+            return {'CANCELLED'}
         self.report({'INFO'}, "Camera created")
         return {'FINISHED'}
