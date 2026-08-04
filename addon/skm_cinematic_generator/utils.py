@@ -20,19 +20,6 @@ def link_object_to_collection(obj, collection):
             c.objects.unlink(obj)
 
 
-def remove_unused_data_blocks():
-    for collection in (bpy.data.meshes, bpy.data.lights, bpy.data.cameras, bpy.data.materials, bpy.data.curves):
-        for block in list(collection):
-            if block.users == 0:
-                collection.remove(block)
-
-
-def clear_scene_objects():
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False, confirm=False)
-    remove_unused_data_blocks()
-
-
 def new_principled_material(name, base_color=(0.2, 0.2, 0.2, 1.0), roughness=0.7, metallic=0.0):
     mat = bpy.data.materials.get(name)
     if mat is None:
@@ -54,3 +41,24 @@ def apply_material(obj, mat):
         obj.data.materials[0] = mat
     else:
         obj.data.materials.append(mat)
+
+
+def ensure_world(scene=None, name="SKM_World"):
+    if scene is None:
+        scene = bpy.context.scene
+    world = scene.world
+    if world is None:
+        world = bpy.data.worlds.new(name)
+        scene.world = world
+    world.use_nodes = True
+    return world
+
+
+def set_world_background(scene=None, color=(0.015, 0.015, 0.02, 1.0), strength=0.08):
+    world = ensure_world(scene)
+    nodes = world.node_tree.nodes
+    bg = nodes.get("Background")
+    if bg:
+        bg.inputs[0].default_value = color
+        bg.inputs[1].default_value = strength
+    return world
