@@ -77,3 +77,18 @@ class SKM_OT_setup_camera(Operator):
             return {'CANCELLED'}
         self.report({'INFO'}, "Camera created")
         return {'FINISHED'}
+
+
+class SKM_OT_setup_render(Operator):
+    bl_idname = "skm.setup_render"
+    bl_label = "Setup Render"
+    bl_description = "Configure Cycles render settings for preview and final output"
+
+    def execute(self, context):
+        try:
+            generator.setup_render(context)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Render setup failed: {exc}")
+            return {'CANCELLED'}
+        self.report({'INFO'}, "Render settings configured")
+        return {'FINISHED'}
