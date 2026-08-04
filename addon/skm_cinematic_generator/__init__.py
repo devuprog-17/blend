@@ -1,7 +1,7 @@
 bl_info = {
     "name": "SKM Cinematic Generator",
     "author": "OpenAI",
-    "version": (0, 2, 0),
+    "version": (0, 3, 0),
     "blender": (5, 2, 0),
     "location": "View3D > Sidebar > SKM",
     "description": "Generate a cinematic sanctum for Singanal Ka Maharaj.",
