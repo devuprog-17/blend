@@ -16,7 +16,7 @@ class SceneConfig:
     wall_depth: float = 1.2
     pillar_radius: float = 0.55
     pillar_height: float = 8.0
-    pillar_segments: int = 24
+    pillar_segments: int = 32
     camera_lens_mm: float = 50.0
     camera_location: tuple = (0.0, -28.0, 3.2)
     camera_rotation_deg: tuple = (82.0, 0.0, 0.0)
@@ -24,6 +24,10 @@ class SceneConfig:
     sun_angle_deg: float = 5.0
     area_energy: float = 250.0
     area_size: float = 6.0
+    world_strength: float = 0.08
+    world_color: tuple = (0.015, 0.015, 0.02, 1.0)
+    cycles_samples: int = 128
+    cycles_preview_samples: int = 32
 
 
 DEFAULT_CONFIG = SceneConfig()
